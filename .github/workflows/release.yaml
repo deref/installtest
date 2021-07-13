@@ -1,0 +1,17 @@
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Release
+      uses: wangyoucao577/go-release-action@v1.18
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: linux
+        goarch: amd64
+        pre_command: go generate
+        extra_files: LICENSE
