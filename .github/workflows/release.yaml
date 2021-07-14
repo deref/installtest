@@ -15,4 +15,4 @@ jobs:
         goos: linux
         goarch: amd64
         pre_command: go generate
-        extra_files: LICENSE
+        sha256sum: true
