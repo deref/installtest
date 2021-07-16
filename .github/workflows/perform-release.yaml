@@ -1,8 +1,10 @@
-push:
-  branches:
-    - main
-  paths:
-    - assets/VERSION
+name: Create a release on VERSION update
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - assets/VERSION
 
 jobs:  
   integration-test:
