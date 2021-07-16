@@ -1,6 +1,6 @@
-package assets 
+package assets
 
 const (
 	Codename = `exoskeleton`
-	Version = `alpha-0.0.2`
+	Version  = `alpha-0.0.2`
 )

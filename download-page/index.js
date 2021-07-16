@@ -38,13 +38,14 @@ exit_with_success() {
   echo ""
   echo "installtest has been installed. To use, open a new terminal, or add installtest to your path:"
   echo ""
-  echo "  export PATH=\$PATH:\${INSTALLROOT}/bin"
+  echo "  export PATH=\\$PATH:\${INSTALLROOT}/bin"
   echo ""
   echo "To check whether installtest is installed, run:"
   echo ""
   echo "  installtest version"
   echo ""
-  echo "Want to know how to use installtest? Visit https://deref.io/installtest/0.0.1/recipes"
+  echo "Want to know how to use installtest? "
+  echo "Visit https://deref.io/installtest/\${INSTALLTEST_VERSION}/recipes"
   echo ""
   exit 0
 }
@@ -122,8 +123,9 @@ srcfile="installtest-\${INSTALLTEST_VERSION}-\${OS}"
 if [ -n "\${cli_arch}" ]; then
   srcfile="\${srcfile}-\${cli_arch}"
 fi
+srcfile="\${srcfile}.tar.gz"
 dstfile="\${INSTALLROOT}/bin/installtest-\${INSTALLTEST_VERSION}"
-url="https://github.com/deref/installtest/releases/download/\${INSTALLTEST_VERSION}/\${srcfile}.tar.gz"
+url="https://github.com/deref/installtest/releases/download/\${INSTALLTEST_VERSION}/\${srcfile}"
 
 if [ -e "\${dstfile}" ]; then
   if validate_checksum "\${dstfile}"; then
@@ -142,7 +144,7 @@ fi
 (
   cd "$tmpdir"
 
-  echo ">> Downloading \${srcfile}..."
+  echo "Downloading \${srcfile}..."
   curl -fLO "\${url}"
   echo "Download complete!"
 
@@ -154,7 +156,9 @@ fi
 
 (
   mkdir -p "\${INSTALLROOT}/bin"
-  mv "\${tmpdir}/\${srcfile}" "\${dstfile}"
+  cd "\${tmpdir}"
+  tar -xzf "\${srcfile}"
+  mv "installtest" "\${dstfile}"
   chmod +x "\${dstfile}"
   rm -f "\${INSTALLROOT}/bin/installtest"
   ln -s "\${dstfile}" "\${INSTALLROOT}/bin/installtest"
@@ -165,6 +169,6 @@ rm -r "$tmpdir"
 
 echo "installtest \${INSTALLTEST_VERSION} was successfully installed 🎉"
 echo ""
-exit_with_success
+exit_with_success  
 `;
 }
