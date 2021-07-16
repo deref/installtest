@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-release-tag:
-    name: Run unit tests
+    name: Create release tag
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

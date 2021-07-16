@@ -3,7 +3,7 @@ package assets_test
 import (
 	"testing"
 
-	"github.com/deref/installtest/priv/assets"
+	"github.com/deref/installtest/assets"
 )
 
 func TestVersionExists(t *testing.T) {

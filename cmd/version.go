@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/deref/installtest/priv/assets"
+	"github.com/deref/installtest/assets"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +16,6 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number of installtest",
 	Long:  `A command for printing the current version`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("versiontest: %s (%s)\n", assets.Version, assets.Codename)
+		fmt.Printf("installtest: %s\n", assets.Version)
 	},
 }

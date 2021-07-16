@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/deref/installtest/priv/assets"
+	"github.com/deref/installtest/assets"
 	"github.com/spf13/cobra"
 )
 
