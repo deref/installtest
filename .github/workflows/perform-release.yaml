@@ -9,7 +9,6 @@ on:
 jobs:  
   integration-test:
     name: Run unit tests
-    description: This would run the full suite of integration tests necessary for a release in a real project.
     runs-on: ubuntu-latest
     steps:
     - name: Install Go
