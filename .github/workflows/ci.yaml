@@ -73,6 +73,7 @@ jobs:
         TAG_REF_NAME: ${{ github.ref }}
         REPOSITORY_NAME: ${{ github.repository }}
         ARTIFACT_DIR: ./artifacts
+        CF_KV_NAMESPACE: dedba216553b445681f5043a2dcaee68
       run: |
         export BASE_NAME=${REPOSITORY_NAME##*/}
         export RELEASE_VERSION=${TAG_REF_NAME##*/v}
@@ -81,6 +82,7 @@ jobs:
         echo "binary_name=$BINARY_NAME" >> $GITHUB_ENV
         echo "artifact_dir=$ARTIFACT_DIR" >> $GITHUB_ENV
         echo "binary_path=${ARTIFACT_DIR}/${BINARY_NAME}" >> $GITHUB_ENV
+        echo "cf_kv_namespace=$CF_KV_NAMESPACE" >> $GITHUB_ENV
     - name: Build
       run: |
         mkdir -p "${{ env.artifact_dir }}"
@@ -100,3 +102,9 @@ jobs:
         asset_path: ${{ env.binary_path }}
         asset_name: ${{ env.binary_name }}
         asset_content_type: application/octet-stream
+    - name: Update version in CloudFlare K/V
+      uses: cloudflare/wrangler-action@1.2.0
+      with:
+        apiToken: ${{ secrets.CF_API_TOKEN }}
+        publish: false
+        preCommands: wrangler kv:key put --namespace-id=${{ env.cf_kv_namespace }} "installtest-version" ${{ env.release_version }}
