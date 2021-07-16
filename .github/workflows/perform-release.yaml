@@ -1,16 +1,12 @@
-on:
-  create:
+push:
+  branches:
+    - main
+  paths:
+    - assets/VERSION
 
-jobs:
-  test-job:
-    name: Test on:create trigger
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Hello World"
-  
+jobs:  
   integration-test:
     name: Run unit tests
-    if: startsWith(github.ref, 'refs/tags/v')
     description: This would run the full suite of integration tests necessary for a release in a real project.
     runs-on: ubuntu-latest
     steps:
@@ -34,20 +30,45 @@ jobs:
     - name: Unit Test
       run: go test ./...
 
+  create-release-tag:
+    name: Create release tag
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Create tag
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ github.token }}
+        script: |
+          const fs = require('fs');
+          const version = fs.readFileSync('assets/VERSION', 'utf8').trim();
+
+          github.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: `refs/tags/v${version}`,
+            sha: context.sha
+          })
+      
   create-release:
     name: Create a GH release from version tag
     runs-on: ubuntu-latest
     needs:
     - integration-test
     steps:
-    - name: Create Release
+    - uses: actions/checkout@v2
+    - name: Get version from VERSION file
+      id: get_version
+      run: echo ::set-output name=release_version::$(cat assets/VERSION | tr -d '[:space:]')"
+    - name: Create release
       id: create_release
       uses: actions/create-release@v1.0.0
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: v${{ steps.get_version.outputs.release_version }}
+        release_name: Release ${{ steps.get_version.outputs.release_version }}
         draft: false
         prerelease: false
     - name: Output Release URL File
@@ -71,19 +92,20 @@ jobs:
           goos: darwin 
     steps:
     - uses: actions/checkout@v2
+    - name: Get version from VERSION file
+      id: get_version
+      run: echo ::set-output name=release_version::$(cat assets/VERSION | tr -d '[:space:]')"
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v1
       with:
         name: release_url
     - name: Set environment variables
       env:
-        TAG_REF_NAME: ${{ github.ref }}
         REPOSITORY_NAME: ${{ github.repository }}
         ARTIFACT_DIR: ./artifacts
       run: |
         export BASE_NAME=${REPOSITORY_NAME##*/}
-        export RELEASE_VERSION=${TAG_REF_NAME##*/v}
-        export BINARY_NAME="${BASE_NAME}-${RELEASE_VERSION}-${{ matrix.goos }}-${{ matrix.goarch }}"
+        export BINARY_NAME="${BASE_NAME}-${{ steps.get_version.outputs.release_version }}-${{ matrix.goos }}-${{ matrix.goarch }}"
         echo "binary_name=$BINARY_NAME" >> $GITHUB_ENV
         echo "artifact_dir=$ARTIFACT_DIR" >> $GITHUB_ENV
         echo "binary_path=${ARTIFACT_DIR}/${BINARY_NAME}" >> $GITHUB_ENV
@@ -114,14 +136,13 @@ jobs:
     - publish-binaries
     steps:
     - uses: actions/checkout@v2
-    - name: Set version
-      env:
-        TAG_REF_NAME: ${{ github.ref }}
-      run: echo "release_version=${TAG_REF_NAME##*/v}" >> $GITHUB_ENV
+    - name: Get version from VERSION file
+      id: get_version
+      run: echo ::set-output name=release_version::$(cat assets/VERSION | tr -d '[:space:]')"
     - name: Update version in CloudFlare K/V
       uses: cloudflare/wrangler-action@1.3.0
       with:
         apiToken: ${{ secrets.CF_API_TOKEN }}
         publish: false
-        preCommands: wrangler kv:key put --namespace-id=dedba216553b445681f5043a2dcaee68 "installtest-version" ${{ env.release_version }}
+        preCommands: wrangler kv:key put --namespace-id=dedba216553b445681f5043a2dcaee68 "installtest-version" ${{ steps.get_version.outputs.release_version }}
         workingDirectory: download-page
