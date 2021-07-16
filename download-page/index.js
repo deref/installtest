@@ -3,6 +3,8 @@ addEventListener('fetch', event => {
 })
 
 
+const maxVersionAgeSecs = 15;
+
 /**
  * Respond with hello worker text
  * @param {Request} request
@@ -10,18 +12,38 @@ addEventListener('fetch', event => {
 async function handleRequest(request) {
   const { pathname, searchParams } = new URL(request.url);
 
-  if (pathname === '/install.sh') {
-    let version = searchParams.get('version');
-    if (version === null) {
-      version = await MY_KV.get("installtest-version")
+  switch (pathname) {
+    case '/version.txt': {
+      const version = await VERSIONS.get('exo')
+      return new Response(version, {
+        headers: {
+          'content-type': 'text/plain',
+          'cache-control': `public; s-max-age=${maxVersionAgeSecs}`,
+        },
+      })
     }
+    case '/install.sh': {
+      let version = searchParams.get('version');
+      if (version === null) {
+        version = await VERSIONS.get('exo')
+      }
 
-    return new Response(getInstallScript(version), {
-      headers: {
-        'content-type': 'text/plain',
-        'cache-control': 'public; s-max-age=30',
-      },
-    })
+      return new Response(getInstallScript(version), {
+        headers: {
+          'content-type': 'text/plain',
+          'cache-control': `public; s-max-age=${maxVersionAgeSecs}`,
+        },
+      })
+    }
+  
+    default:
+      return new Response('Not found', {
+        status: 404,
+        headers: {
+          'content-type': 'text/plain',
+          'cache-control': `public; s-max-age=60`,
+        }
+      })
   }
   
 }
@@ -31,21 +53,21 @@ function getInstallScript(version) {
 
 set -eu
 
-INSTALLTEST_VERSION=\${INSTALLTEST_VERSION:-${version}}
-INSTALLROOT=\${INSTALLROOT:-"\${HOME}/.installtest"}
+EXO_VERSION=\${EXO_VERSION:-${version}}
+INSTALLROOT=\${INSTALLROOT:-"\${HOME}/.exo"}
 
 exit_with_success() {
   echo ""
-  echo "installtest has been installed. To use, open a new terminal, or add installtest to your path:"
+  echo "exo has been installed. To use, open a new terminal, or add exo to your path:"
   echo ""
   echo "  export PATH=\\$PATH:\${INSTALLROOT}/bin"
   echo ""
-  echo "To check whether installtest is installed, run:"
+  echo "To check whether exo is installed, run:"
   echo ""
-  echo "  installtest version"
+  echo "  exo version"
   echo ""
-  echo "Want to know how to use installtest? "
-  echo "Visit https://deref.io/installtest/\${INSTALLTEST_VERSION}/recipes"
+  echo "Want to know how to use exo? "
+  echo "Visit https://deref.io/exo/\${EXO_VERSION}/recipes"
   echo ""
   exit 0
 }
@@ -100,13 +122,13 @@ case $OS in
         cli_arch=$arch
         ;;
       *)
-        echo "There is no installtest $OS support for $arch. Please open an issue with your platform details."
+        echo "There is no exo $OS support for $arch. Please open an issue with your platform details."
         exit 1
         ;;
     esac
     ;;
   *)
-    echo "There is no installtest support for $OS/$arch. Please open an issue with your platform details."
+    echo "There is no exo support for $OS/$arch. Please open an issue with your platform details."
     exit 1
     ;;
 esac
@@ -118,23 +140,23 @@ checksumbin=$(command -v openssl) || checksumbin=$(command -v shasum) || {
 }
 
 
-tmpdir=$(mktemp -d /tmp/installtest.XXXXXX)
-srcfile="installtest-\${INSTALLTEST_VERSION}-\${OS}"
+tmpdir=$(mktemp -d /tmp/exo.XXXXXX)
+srcfile="exo-\${EXO_VERSION}-\${OS}"
 if [ -n "\${cli_arch}" ]; then
   srcfile="\${srcfile}-\${cli_arch}"
 fi
-dstfile="\${INSTALLROOT}/bin/installtest-\${INSTALLTEST_VERSION}"
-url="https://github.com/deref/installtest/releases/download/v\${INSTALLTEST_VERSION}/\${srcfile}"
+dstfile="\${INSTALLROOT}/bin/exo-\${EXO_VERSION}"
+url="https://github.com/deref/exo/releases/download/v\${EXO_VERSION}/\${srcfile}"
 
 if [ -e "\${dstfile}" ]; then
   if validate_checksum "\${dstfile}"; then
     echo ""
-    echo "installtest \${INSTALLTEST_VERSION} was already downloaded; making it the default 🎉"
+    echo "exo \${EXO_VERSION} was already downloaded; making it the default 🎉"
     echo ""
     echo "To force re-downloading, delete '\${dstfile}' then run me again."
     (
-      rm -f "\${INSTALLROOT}/bin/installtest"
-      ln -s "\${dstfile}" "\${INSTALLROOT}/bin/installtest"
+      rm -f "\${INSTALLROOT}/bin/exo"
+      ln -s "\${dstfile}" "\${INSTALLROOT}/bin/exo"
     )
     exit_with_success
   fi
@@ -143,7 +165,7 @@ fi
 (
   cd "$tmpdir"
 
-  echo "Downloading \${srcfile}..."
+  echo "Downloading \${srcfile} from ${url}..."
   curl -fLO "\${url}"
   echo "Download complete!"
 
@@ -155,16 +177,16 @@ fi
 
 (
   mkdir -p "\${INSTALLROOT}/bin"
-  mv "\${srcfile}" "\${dstfile}"
+  mv "\${tmpdir}/\${srcfile}" "\${dstfile}"
   chmod +x "\${dstfile}"
-  rm -f "\${INSTALLROOT}/bin/installtest"
-  ln -s "\${dstfile}" "\${INSTALLROOT}/bin/installtest"
+  rm -f "\${INSTALLROOT}/bin/exo"
+  ln -s "\${dstfile}" "\${INSTALLROOT}/bin/exo"
 )
 
 
 rm -r "$tmpdir"
 
-echo "installtest \${INSTALLTEST_VERSION} was successfully installed 🎉"
+echo "exo \${EXO_VERSION} was successfully installed 🎉"
 echo ""
 exit_with_success  
 `;
