@@ -84,7 +84,7 @@ jobs:
     - name: Build
       run: |
         mkdir -p "${{ env.artifact_dir }}"
-        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goos }} go build -o "${{ env.binary_path }}"
+        GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o "${{ env.binary_path }}"
     - name: Set Upload URL
       id: get_release_info
       run: |
