@@ -123,9 +123,8 @@ srcfile="installtest-\${INSTALLTEST_VERSION}-\${OS}"
 if [ -n "\${cli_arch}" ]; then
   srcfile="\${srcfile}-\${cli_arch}"
 fi
-srcfile="\${srcfile}.tar.gz"
 dstfile="\${INSTALLROOT}/bin/installtest-\${INSTALLTEST_VERSION}"
-url="https://github.com/deref/installtest/releases/download/\${INSTALLTEST_VERSION}/\${srcfile}"
+url="https://github.com/deref/installtest/releases/download/v\${INSTALLTEST_VERSION}/\${srcfile}"
 
 if [ -e "\${dstfile}" ]; then
   if validate_checksum "\${dstfile}"; then
@@ -156,9 +155,7 @@ fi
 
 (
   mkdir -p "\${INSTALLROOT}/bin"
-  cd "\${tmpdir}"
-  tar -xzf "\${srcfile}"
-  mv "installtest" "\${dstfile}"
+  mv "\${srcfile}" "\${dstfile}"
   chmod +x "\${dstfile}"
   rm -f "\${INSTALLROOT}/bin/installtest"
   ln -s "\${dstfile}" "\${INSTALLROOT}/bin/installtest"
